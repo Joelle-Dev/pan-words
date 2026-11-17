@@ -137,18 +137,32 @@
       <div class="card-soft">
         <div class="field">
           <label class="field-label" for="manual-word">单词</label>
-          <input
-            id="manual-word"
-            v-model="manual.word"
-            class="input"
-            type="text"
-            autocomplete="off"
-            autocapitalize="off"
-            autocorrect="off"
-            spellcheck="false"
-            placeholder="skepticism"
-          >
+          <div class="input-with-action">
+            <input
+              id="manual-word"
+              ref="wordInput"
+              v-model="manual.word"
+              class="input"
+              type="text"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              placeholder="skepticism"
+              @keydown.enter.prevent="runLookup"
+            >
+            <button
+              class="input-action"
+              type="button"
+              :disabled="!manual.word.trim() || looking"
+              @click="runLookup"
+            >
+              {{ looking ? '查…' : '自动填' }}
+            </button>
+          </div>
+          <p v-if="lookupNote" class="field-note">{{ lookupNote }}</p>
         </div>
+
         <div class="field" style="margin-top: 12px;">
           <label class="field-label" for="manual-meaning">释义</label>
           <input
@@ -159,6 +173,25 @@
             placeholder="怀疑，怀疑态度"
           >
         </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <label class="field-label" for="manual-phonetic">音标（可选）</label>
+          <input
+            id="manual-phonetic"
+            v-model="manual.phonetic"
+            class="input"
+            type="text"
+            placeholder="/ˈskeptɪsɪzəm/"
+          >
+        </div>
+
+        <div v-if="lookupMeanings.length" class="dictionary-hints">
+          <div v-for="(item, index) in lookupMeanings" :key="index" class="dictionary-hint">
+            <span class="dictionary-pos">{{ item.pos || '—' }}</span>
+            <span class="dictionary-def">{{ item.definitions.join(' / ') }}</span>
+          </div>
+        </div>
+
         <div class="field" style="margin-top: 12px;">
           <label class="field-label" for="manual-sentence">原句（可选，会做成挖空卡）</label>
           <textarea
@@ -241,6 +274,7 @@ import { showToast } from 'vant';
 import { useRouter } from 'vue-router';
 import { computeCoverage, tokenize } from '../srs/tokenize.js';
 import { addWord, importWords, listArticles, saveArticle } from '../lib/repo.js';
+import { lookupWord } from '../lib/lookup.js';
 import { useLibrary } from '../composables/useLibrary';
 import { haptic } from '../utils/haptics.js';
 import { parseWordList } from '../utils/wordList.js';
@@ -261,7 +295,12 @@ const scanning = ref(false);
 const coverage = ref(null);
 const picked = ref(new Set());
 
-const manual = ref({ word: '', meaning: '', sentence: '', source: '' });
+const manual = ref({ word: '', meaning: '', phonetic: '', sentence: '', source: '' });
+const wordInput = ref(null);
+const looking = ref(false);
+const lookupNote = ref('');
+const lookupMeanings = ref([]);
+let lookupToken = 0;
 
 const importText = ref('');
 const importBusy = ref(false);
@@ -286,6 +325,7 @@ const importPreview = computed(() => importEntries.value);
 
 function setTab(next) {
   tab.value = next;
+  lookupNote.value = '';
   haptic('light');
 }
 
@@ -380,6 +420,47 @@ function sentenceFor(item) {
   return (sentences[index] || '').trim();
 }
 
+async function runLookup() {
+  const word = manual.value.word.trim();
+  if (!word || looking.value) return;
+
+  const token = ++lookupToken;
+  looking.value = true;
+  lookupNote.value = '';
+
+  try {
+    const result = await lookupWord(word);
+    if (token !== lookupToken) return;
+
+    if (!result) {
+      lookupNote.value = '没查到，自己填也可以';
+      return;
+    }
+
+    // 只填空着的字段，不覆盖用户已经输入的内容
+    if (!manual.value.meaning.trim() && result.meaning) {
+      manual.value.meaning = result.meaning;
+    }
+    if (!manual.value.phonetic.trim() && result.phonetic) {
+      manual.value.phonetic = result.phonetic;
+    }
+    lookupMeanings.value = result.meanings || [];
+
+    const parts = [];
+    if (result.phonetic) parts.push(result.phonetic);
+    if (result.pos) parts.push(result.pos);
+    lookupNote.value = parts.length
+      ? `已补全${result.meaning ? '释义和' : ''}${result.phonetic ? '音标' : '词性'}，可以再改`
+      : '查到了英文释义，见下方';
+    haptic('light');
+  } catch (err) {
+    if (token !== lookupToken) return;
+    lookupNote.value = err?.message || '查询失败，自己填也可以';
+  } finally {
+    if (token === lookupToken) looking.value = false;
+  }
+}
+
 async function addManual() {
   const word = manual.value.word.trim();
   if (!word) return;
@@ -387,6 +468,7 @@ async function addManual() {
     const result = await addWord({
       word,
       meaning: manual.value.meaning,
+      phonetic: manual.value.phonetic,
       sentence: manual.value.sentence,
       source: manual.value.source,
       knownWords: knownWordSet()
@@ -397,7 +479,9 @@ async function addManual() {
       showToast('这个词已经在词库里了');
     } else {
       showToast('加到词库啦');
-      manual.value = { word: '', meaning: '', sentence: '', source: '' };
+      manual.value = { word: '', meaning: '', phonetic: '', sentence: '', source: '' };
+      lookupMeanings.value = [];
+      lookupNote.value = '';
     }
   } catch (err) {
     console.error('加词失败', err);

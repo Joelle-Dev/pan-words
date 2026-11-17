@@ -42,7 +42,13 @@
     <SheetFrame v-model:show="showWordSheet" :title="selected?.word || '加进词库'">
       <div v-if="selected" class="field">
         <label class="field-label">释义</label>
-        <input v-model="meaningDraft" class="input" type="text" placeholder="填一个你记得住的中文释义">
+        <div class="input-with-action">
+          <input v-model="meaningDraft" class="input" type="text" placeholder="填一个你记得住的中文释义">
+          <button class="input-action" type="button" :disabled="looking" @click="lookupSelected">
+            {{ looking ? '查…' : '自动填' }}
+          </button>
+        </div>
+        <p v-if="lookupNote" class="field-note">{{ lookupNote }}</p>
       </div>
       <p v-if="selectedSentence" class="page-subtitle" style="margin-top: 10px;">{{ selectedSentence }}</p>
       <button class="primary-btn" type="button" style="margin-top: 16px;" @click="addSelected">
@@ -59,6 +65,7 @@ import { showToast } from 'vant';
 import SheetFrame from '../components/SheetFrame.vue';
 import { useLibrary } from '../composables/useLibrary';
 import { getArticle, addWord, touchArticle } from '../lib/repo.js';
+import { lookupWord } from '../lib/lookup.js';
 import { computeCoverage, tokenize } from '../srs/tokenize.js';
 import { haptic } from '../utils/haptics';
 
@@ -73,6 +80,8 @@ const showWordSheet = ref(false);
 const selected = ref(null);
 const selectedSentence = ref('');
 const meaningDraft = ref('');
+const looking = ref(false);
+const lookupNote = ref('');
 const readerRef = ref(null);
 
 const coverageText = computed(() => {
@@ -131,9 +140,33 @@ async function onTextClick(event) {
   if (!word) return;
   selected.value = { word };
   meaningDraft.value = '';
+  lookupNote.value = '';
   selectedSentence.value = sentenceContaining(article.value?.text || '', word);
   showWordSheet.value = true;
   haptic('light');
+  // 打开弹层就顺手查一次，省掉一次点击
+  lookupSelected();
+}
+
+async function lookupSelected() {
+  const word = selected.value?.word;
+  if (!word || looking.value) return;
+  looking.value = true;
+  lookupNote.value = '';
+  try {
+    const result = await lookupWord(word);
+    if (!result) {
+      lookupNote.value = '没查到，自己填也可以';
+      return;
+    }
+    if (!meaningDraft.value.trim() && result.meaning) meaningDraft.value = result.meaning;
+    const detail = [result.phonetic, result.pos].filter(Boolean).join(' · ');
+    lookupNote.value = detail ? `已补全释义（${detail}）` : '已补全释义，可以再改';
+  } catch (err) {
+    lookupNote.value = err?.message || '查询失败，自己填也可以';
+  } finally {
+    looking.value = false;
+  }
 }
 
 function sentenceContaining(text, word) {

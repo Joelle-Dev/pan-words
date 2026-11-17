@@ -12,7 +12,13 @@
     <div v-if="note" class="card">
       <div class="field">
         <label class="field-label" for="word">单词</label>
-        <input id="word" v-model="form.word" class="input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="input-with-action">
+          <input id="word" v-model="form.word" class="input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <button class="input-action" type="button" :disabled="!form.word.trim() || looking" @click="runLookup">
+            {{ looking ? '查…' : '自动填' }}
+          </button>
+        </div>
+        <p v-if="lookupNote" class="field-note">{{ lookupNote }}</p>
       </div>
       <div class="field" style="margin-top: 12px;">
         <label class="field-label" for="meaning">释义</label>
@@ -78,6 +84,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { showConfirmDialog, showToast } from 'vant';
 import { useLibrary } from '../composables/useLibrary';
 import { cardsForNote, deleteWord, updateWord } from '../lib/repo.js';
+import { lookupWord } from '../lib/lookup.js';
 import { CARD_MODE_LABELS, CARD_STATE_LABELS } from '../srs/constants.js';
 import { maskSentence } from '../srs/tokenize.js';
 import { primeSpeech, speak } from '../lib/tts.js';
@@ -92,6 +99,8 @@ const { showUndo } = useUndo();
 const note = ref(null);
 const noteCards = ref([]);
 const saving = ref(false);
+const looking = ref(false);
+const lookupNote = ref('');
 const form = ref({ word: '', meaning: '', phonetic: '', sentence: '', source: '' });
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -142,6 +151,28 @@ async function load() {
     };
   }
   noteCards.value = found ? await cardsForNote(id) : [];
+}
+
+async function runLookup() {
+  const word = form.value.word.trim();
+  if (!word || looking.value) return;
+  looking.value = true;
+  lookupNote.value = '';
+  try {
+    const result = await lookupWord(word);
+    if (!result) {
+      lookupNote.value = '没查到，自己填也可以';
+      return;
+    }
+    if (!form.value.meaning.trim() && result.meaning) form.value.meaning = result.meaning;
+    if (!form.value.phonetic.trim() && result.phonetic) form.value.phonetic = result.phonetic;
+    lookupNote.value = result.meaning || result.phonetic ? '已补全，记得保存' : '只查到英文释义';
+    haptic('light');
+  } catch (err) {
+    lookupNote.value = err?.message || '查询失败，自己填也可以';
+  } finally {
+    looking.value = false;
+  }
 }
 
 async function save() {
