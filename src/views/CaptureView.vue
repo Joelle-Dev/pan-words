@@ -106,6 +106,30 @@
           <span>你要么太厉害，要么词库已经覆盖了它</span>
         </div>
       </template>
+
+      <section v-if="articles.length">
+        <div class="page-head">
+          <h2 class="page-title" style="font-size: 16px;">读过的文章</h2>
+          <span class="page-subtitle" style="margin: 0;">{{ articles.length }} 篇</span>
+        </div>
+        <div class="word-list" style="margin-top: 10px;">
+          <button
+            v-for="item in articles"
+            :key="item.id"
+            class="word-row"
+            type="button"
+            @click="openArticle(item.id)"
+          >
+            <span class="word-row-main">
+              <span class="word-row-word" style="font-family: var(--font); font-size: 15px;">{{ item.title }}</span>
+              <span class="word-row-meaning">{{ articleSummary(item) }}</span>
+            </span>
+            <span class="word-row-side">
+              <span>{{ readAt(item.lastReadAt) }}</span>
+            </span>
+          </button>
+        </div>
+      </section>
     </template>
 
     <!-- 手动加词 -->
@@ -212,10 +236,11 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { showToast } from 'vant';
+import { useRouter } from 'vue-router';
 import { computeCoverage, tokenize } from '../srs/tokenize.js';
-import { addWord, importWords, saveArticle } from '../lib/repo.js';
+import { addWord, importWords, listArticles, saveArticle } from '../lib/repo.js';
 import { useLibrary } from '../composables/useLibrary';
 import { haptic } from '../utils/haptics.js';
 import { parseWordList } from '../utils/wordList.js';
@@ -226,6 +251,7 @@ const MODES = [
   { value: 'import', label: '导入词表' }
 ];
 
+const router = useRouter();
 const library = useLibrary();
 
 const tab = ref('scan');
@@ -239,6 +265,7 @@ const manual = ref({ word: '', meaning: '', sentence: '', source: '' });
 
 const importText = ref('');
 const importBusy = ref(false);
+const articles = ref([]);
 
 const coveragePercent = computed(() => {
   if (!coverage.value) return '0%';
@@ -251,6 +278,10 @@ const allPicked = computed(() => (
 ));
 
 const importEntries = computed(() => parseWordList(importText.value));
+
+onMounted(() => {
+  loadArticles();
+});
 const importPreview = computed(() => importEntries.value);
 
 function setTab(next) {
@@ -335,6 +366,7 @@ async function addPickedWords() {
   }
 
   await library.reload();
+  await loadArticles();
   haptic('success');
   showToast(`加了 ${added} 个词${duplicates ? `，${duplicates} 个已存在` : ''}`);
   picked.value = new Set();
@@ -370,6 +402,33 @@ async function addManual() {
   } catch (err) {
     console.error('加词失败', err);
     showToast(err?.message || '没加进去，再试试');
+  }
+}
+
+function articleSummary(item) {
+  const stats = item.stats;
+  if (!stats) return '还没读过';
+  const percent = (Number(stats.coverage || 0) * 100).toFixed(1);
+  const unknown = Math.max(0, Number(stats.unique || 0) - Number(stats.known || 0));
+  return `能读懂 ${percent}% · 生词 ${unknown} 个`;
+}
+
+function readAt(timestamp) {
+  const at = Number(timestamp) || 0;
+  if (!at) return '';
+  const date = new Date(at);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function openArticle(articleId) {
+  router.push(`/read/${articleId}`);
+}
+
+async function loadArticles() {
+  try {
+    articles.value = await listArticles();
+  } catch (err) {
+    console.error('读取文章列表失败', err);
   }
 }
 
