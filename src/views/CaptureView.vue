@@ -3,46 +3,33 @@
     <header class="page-head">
       <div class="page-head-copy">
         <h1 class="page-title">收词</h1>
-        <p class="page-subtitle">粘一段英文，扫出你还不认识的词</p>
+        <p class="page-subtitle">{{ tab === 'scan' ? '粘一段英文，扫出你还不认识的词' : (tab === 'manual' ? '一个一个加，会自动补全' : '每行一个词，批量进来') }}</p>
       </div>
     </header>
 
-    <div class="chip-row">
-      <button
-        v-for="mode in MODES"
-        :key="mode.value"
-        class="chip"
-        :class="{ 'is-active': tab === mode.value }"
-        type="button"
-        @click="setTab(mode.value)"
-      >
-        {{ mode.label }}
-      </button>
-    </div>
-
-    <!-- 扫描 -->
+    <!-- 扫描主流程 -->
     <template v-if="tab === 'scan'">
-      <div class="card-soft">
-        <div class="field">
-          <label class="field-label" for="scan-text">原文</label>
-          <textarea
-            id="scan-text"
-            v-model="scanText"
-            class="textarea"
-            placeholder="把一章原文、一篇文章、一段新闻粘进来…"
-            spellcheck="false"
-          ></textarea>
-        </div>
+      <div class="card">
+        <textarea
+          v-model="scanText"
+          class="textarea is-tall"
+          placeholder="把一章原文、一篇文章、一段新闻粘进来…"
+          spellcheck="false"
+        ></textarea>
 
-        <div class="field field-gap">
-          <label class="field-label" for="scan-title">标题（可选，会存进阅读列表）</label>
-          <input
-            id="scan-title"
-            v-model="scanTitle"
-            class="input"
-            type="text"
-            placeholder="比如：The Economist 2026-05"
-          >
+        <div class="fold" :class="{ 'is-open': scanFoldOpen }">
+          <button class="fold-toggle" type="button" @click="scanFoldOpen = !scanFoldOpen">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+            标题（可选，会存进阅读列表）
+          </button>
+          <div v-if="scanFoldOpen" class="fold-body">
+            <input
+              v-model="scanTitle"
+              class="input"
+              type="text"
+              placeholder="比如：The Economist 2026-05"
+            >
+          </div>
         </div>
 
         <button
@@ -107,12 +94,18 @@
         </div>
       </template>
 
+      <!-- 其他收词入口 -->
+      <div class="btn-row" style="margin-top: 4px;">
+        <button class="secondary-btn" type="button" @click="setTab('manual')">手动加词</button>
+        <button class="secondary-btn" type="button" @click="setTab('import')">导入词表</button>
+      </div>
+
       <section v-if="articles.length">
         <div class="section-head">
           <h2 class="section-title">读过的文章</h2>
           <span class="section-meta">{{ articles.length }} 篇</span>
         </div>
-        <div class="word-list" style="margin-top: 12px;">
+        <div class="word-list">
           <button
             v-for="item in articles"
             :key="item.id"
@@ -134,7 +127,9 @@
 
     <!-- 手动加词 -->
     <template v-else-if="tab === 'manual'">
-      <div class="card-soft">
+      <button class="text-btn" type="button" style="align-self: flex-start;" @click="setTab('scan')">← 粘一段文字</button>
+
+      <div class="card">
         <div class="field">
           <label class="field-label" for="manual-word">单词</label>
           <div class="input-with-action">
@@ -174,17 +169,6 @@
           >
         </div>
 
-        <div class="field field-gap">
-          <label class="field-label" for="manual-phonetic">音标（可选）</label>
-          <input
-            id="manual-phonetic"
-            v-model="manual.phonetic"
-            class="input"
-            type="text"
-            placeholder="/ˈskeptɪsɪzəm/"
-          >
-        </div>
-
         <div v-if="lookupMeanings.length" class="dictionary-hints">
           <div v-for="(item, index) in lookupMeanings" :key="index" class="dictionary-hint">
             <span class="dictionary-pos">{{ item.pos || '—' }}</span>
@@ -192,26 +176,45 @@
           </div>
         </div>
 
-        <div class="field field-gap">
-          <label class="field-label" for="manual-sentence">原句（可选，会做成挖空卡）</label>
-          <textarea
-            id="manual-sentence"
-            v-model="manual.sentence"
-            class="textarea is-short"
-            placeholder="The policy was met with widespread skepticism."
-            spellcheck="false"
-          ></textarea>
+        <div class="fold" :class="{ 'is-open': manualFoldOpen }">
+          <button class="fold-toggle" type="button" @click="manualFoldOpen = !manualFoldOpen">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+            更多选项（音标 / 原句 / 来源）
+          </button>
+          <div v-if="manualFoldOpen" class="fold-body">
+            <div class="field" style="margin-top: 6px;">
+              <label class="field-label" for="manual-phonetic">音标</label>
+              <input
+                id="manual-phonetic"
+                v-model="manual.phonetic"
+                class="input"
+                type="text"
+                placeholder="/ˈskeptɪsɪzəm/"
+              >
+            </div>
+            <div class="field field-gap">
+              <label class="field-label" for="manual-sentence">原句（会做成挖空卡）</label>
+              <textarea
+                id="manual-sentence"
+                v-model="manual.sentence"
+                class="textarea is-short"
+                placeholder="The policy was met with widespread skepticism."
+                spellcheck="false"
+              ></textarea>
+            </div>
+            <div class="field field-gap">
+              <label class="field-label" for="manual-source">来源</label>
+              <input
+                id="manual-source"
+                v-model="manual.source"
+                class="input"
+                type="text"
+                placeholder="书名 第 3 章"
+              >
+            </div>
+          </div>
         </div>
-        <div class="field field-gap">
-          <label class="field-label" for="manual-source">来源（可选）</label>
-          <input
-            id="manual-source"
-            v-model="manual.source"
-            class="input"
-            type="text"
-            placeholder="书名 第 3 章"
-          >
-        </div>
+
         <button
           class="primary-btn"
           type="button"
@@ -226,17 +229,15 @@
 
     <!-- 导入词表 -->
     <template v-else>
-      <div class="card-soft">
-        <div class="field">
-          <label class="field-label" for="import-text">词表</label>
-          <textarea
-            id="import-text"
-            v-model="importText"
-            class="textarea is-tall"
-            placeholder="每行一个词，支持这几种格式：&#10;abandon​放弃&#10;abandon - 放弃&#10;abandon,放弃,n.&#10;abandon"
-            spellcheck="false"
-          ></textarea>
-        </div>
+      <button class="text-btn" type="button" style="align-self: flex-start;" @click="setTab('scan')">← 粘一段文字</button>
+
+      <div class="card">
+        <textarea
+          v-model="importText"
+          class="textarea is-tall"
+          placeholder="每行一个词，支持这几种格式：&#10;abandon​放弃&#10;abandon - 放弃&#10;abandon,放弃,n.&#10;abandon"
+          spellcheck="false"
+        ></textarea>
         <button
           class="primary-btn"
           type="button"
@@ -246,21 +247,6 @@
         >
           导入 {{ importEntries.length }} 个词
         </button>
-      </div>
-
-      <div v-if="importPreview.length" class="card">
-        <h2 class="section-title">识别到 {{ importPreview.length }} 行</h2>
-        <div class="word-list" style="margin-top: 12px;">
-          <div v-for="(row, index) in importPreview.slice(0, 20)" :key="index" class="word-row">
-            <span class="word-row-main">
-              <span class="word-row-word">{{ row.word }}</span>
-              <span class="word-row-meaning">{{ row.meaning || '无释义' }}</span>
-            </span>
-          </div>
-        </div>
-        <p v-if="importPreview.length > 20" class="card-hint">
-          还有 {{ importPreview.length - 20 }} 行未显示
-        </p>
       </div>
     </template>
   </div>
@@ -277,12 +263,6 @@ import { useLibrary } from '../composables/useLibrary';
 import { haptic } from '../utils/haptics.js';
 import { parseWordList } from '../utils/wordList.js';
 
-const MODES = [
-  { value: 'scan', label: '粘一段文字' },
-  { value: 'manual', label: '手动加词' },
-  { value: 'import', label: '导入词表' }
-];
-
 const router = useRouter();
 const library = useLibrary();
 
@@ -292,6 +272,8 @@ const scanTitle = ref('');
 const scanning = ref(false);
 const coverage = ref(null);
 const picked = ref(new Set());
+const scanFoldOpen = ref(false);
+const manualFoldOpen = ref(false);
 
 const manual = ref({ word: '', meaning: '', phonetic: '', sentence: '', source: '' });
 const wordInput = ref(null);
@@ -319,7 +301,6 @@ const importEntries = computed(() => parseWordList(importText.value));
 onMounted(() => {
   loadArticles();
 });
-const importPreview = computed(() => importEntries.value);
 
 function setTab(next) {
   tab.value = next;

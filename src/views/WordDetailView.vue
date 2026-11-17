@@ -6,6 +6,9 @@
           <path d="m14.5 18-6-6 6-6"></path>
         </svg>
       </button>
+      <span v-if="note" class="state-dot" :class="`is-${primaryState}`" style="margin-left: auto;">
+        {{ stateLabel(primaryState) }}
+      </span>
       <button class="icon-btn" type="button" aria-label="发音" @click="playAudio">🔊</button>
     </header>
 
@@ -20,22 +23,32 @@
         </div>
         <p v-if="lookupNote" class="field-note">{{ lookupNote }}</p>
       </div>
+
       <div class="field field-gap">
         <label class="field-label" for="meaning">释义</label>
         <input id="meaning" v-model="form.meaning" class="input" type="text" placeholder="填一个你记得住的中文释义">
       </div>
-      <div class="field field-gap">
-        <label class="field-label" for="phonetic">音标（可选）</label>
-        <input id="phonetic" v-model="form.phonetic" class="input" type="text" placeholder="/ˈskeptɪsɪzəm/">
-      </div>
-      <div class="field field-gap">
-        <label class="field-label" for="sentence">原句（可选）</label>
-        <textarea id="sentence" v-model="form.sentence" class="textarea" style="min-height: 82px;" spellcheck="false"></textarea>
-        <p v-if="blankPreview" class="page-subtitle" style="margin: 0;">挖空预览：{{ blankPreview }}</p>
-      </div>
-      <div class="field field-gap">
-        <label class="field-label" for="source">来源（可选）</label>
-        <input id="source" v-model="form.source" class="input" type="text" placeholder="书名 第 3 章">
+
+      <div class="fold" :class="{ 'is-open': moreOpen }">
+        <button class="fold-toggle" type="button" @click="moreOpen = !moreOpen">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+          更多选项（音标 / 原句 / 来源）
+        </button>
+        <div v-if="moreOpen" class="fold-body">
+          <div class="field" style="margin-top: 6px;">
+            <label class="field-label" for="phonetic">音标</label>
+            <input id="phonetic" v-model="form.phonetic" class="input" type="text" placeholder="/ˈskeptɪsɪzəm/">
+          </div>
+          <div class="field field-gap">
+            <label class="field-label" for="sentence">原句</label>
+            <textarea id="sentence" v-model="form.sentence" class="textarea is-short" spellcheck="false"></textarea>
+            <p v-if="blankPreview" class="field-note">挖空预览：{{ blankPreview }}</p>
+          </div>
+          <div class="field field-gap">
+            <label class="field-label" for="source">来源</label>
+            <input id="source" v-model="form.source" class="input" type="text" placeholder="书名 第 3 章">
+          </div>
+        </div>
       </div>
 
       <button
@@ -51,7 +64,7 @@
 
     <div v-if="noteCards.length" class="card">
       <h2 class="section-title">这张词的卡</h2>
-      <div class="word-list" style="margin-top: 10px;">
+      <div class="word-list is-flat" style="margin-top: 10px;">
         <div v-for="card in noteCards" :key="card.id" class="word-row">
           <span class="word-row-main">
             <span class="word-row-label">{{ modeLabel(card.mode) }}</span>
@@ -65,7 +78,7 @@
       </div>
     </div>
 
-    <button v-if="note" class="secondary-btn" type="button" @click="remove">
+    <button v-if="note" class="text-btn is-danger" type="button" style="align-self: center;" @click="remove">
       删除这个词
     </button>
 
@@ -99,6 +112,7 @@ const noteCards = ref([]);
 const saving = ref(false);
 const looking = ref(false);
 const lookupNote = ref('');
+const moreOpen = ref(false);
 const form = ref({ word: '', meaning: '', phonetic: '', sentence: '', source: '' });
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -112,6 +126,11 @@ const dirty = computed(() => {
 const blankPreview = computed(() => {
   if (!form.value.sentence) return '';
   return maskSentence(form.value.sentence, form.value.word);
+});
+
+const primaryState = computed(() => {
+  const card = noteCards.value.find((item) => item.mode === 'recognize') || noteCards.value[0];
+  return card?.state || 'new';
 });
 
 function modeLabel(mode) {
@@ -149,6 +168,7 @@ async function load() {
     };
   }
   noteCards.value = found ? await cardsForNote(id) : [];
+  moreOpen.value = Boolean(found && (found.phonetic || found.sentence || found.source));
 }
 
 async function runLookup() {

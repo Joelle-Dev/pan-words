@@ -23,17 +23,13 @@
     </div>
 
     <template v-else>
-      <div class="card-soft" style="margin-bottom: 12px;">
-        <div class="coverage-head">
-          <span class="coverage-value">{{ coverageText }}</span>
-          <span class="section-meta">可读性</span>
-        </div>
-        <div class="coverage-bar">
-          <div class="coverage-fill" :style="{ width: `${(coverage?.coverage || 0) * 100}%` }"></div>
-        </div>
-        <p class="card-hint">
-          生词 {{ coverage?.unknown.length || 0 }} 个 · 点带下划线的词可以加进词库
-        </p>
+      <div class="reader-summary">
+        <span>可读性 <b>{{ coverageText }}</b></span>
+        <span>生词 {{ coverage?.unknown.length || 0 }} 个</span>
+        <span class="section-meta">点带下划线的词可收藏</span>
+      </div>
+      <div class="coverage-bar" style="margin-top: -8px;">
+        <div class="coverage-fill" :style="{ width: `${(coverage?.coverage || 0) * 100}%` }"></div>
       </div>
 
       <div class="reader-text" ref="readerRef" @click="onTextClick" v-html="rendered"></div>

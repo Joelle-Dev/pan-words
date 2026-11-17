@@ -13,28 +13,29 @@
       </button>
     </header>
 
-    <input
-      v-model="query"
-      class="input"
-      type="search"
-      placeholder="搜单词、释义或来源"
-      autocomplete="off"
-      autocapitalize="off"
-      autocorrect="off"
-      spellcheck="false"
-    >
-
-    <div class="chip-row">
-      <button
-        v-for="filter in FILTERS"
-        :key="filter.value"
-        class="chip"
-        :class="{ 'is-active': stateFilter === filter.value }"
-        type="button"
-        @click="stateFilter = filter.value"
+    <div class="search-sticky">
+      <input
+        v-model="query"
+        class="input"
+        type="search"
+        placeholder="搜单词、释义或来源"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
       >
-        {{ filter.label }}
-      </button>
+      <div class="chip-row" style="margin-top: 8px;">
+        <button
+          v-for="filter in FILTERS"
+          :key="filter.value"
+          class="chip"
+          :class="{ 'is-active': stateFilter === filter.value }"
+          type="button"
+          @click="stateFilter = filter.value"
+        >
+          {{ filter.label }}
+        </button>
+      </div>
     </div>
 
     <div v-if="filtered.length" class="word-list">
@@ -50,7 +51,7 @@
           <span class="word-row-meaning">{{ row.note.meaning || '还没填释义' }}</span>
         </span>
         <span class="word-row-side">
-          <span class="state-dot" :class="`is-${row.state}`">{{ row.stateLabel }}</span>
+          <span class="state-dot" :class="`is-${row.state}`"></span>
           <span v-if="row.dueLabel">{{ row.dueLabel }}</span>
         </span>
       </button>
@@ -62,19 +63,14 @@
       <span v-else>去「收词」粘一段原文，Pan 会帮你扫出生词</span>
     </div>
 
-    <button
-      v-if="hasMore"
-      class="secondary-btn"
-      type="button"
-      @click="limit += 100"
-    >
-      再看 {{ Math.min(100, filtered.length - visibleRows.length) }} 个
-    </button>
+    <div v-if="hasMore" ref="sentinel" class="section-meta" style="text-align: center; padding: 10px 0;">
+      下滑加载更多（{{ filtered.length - visibleRows.length }} 个）
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useLibrary } from '../composables/useLibrary';
 import { CARD_STATE_LABELS } from '../srs/constants.js';
@@ -86,6 +82,8 @@ const { deckNotes, cards } = useLibrary();
 const query = ref('');
 const stateFilter = ref('all');
 const limit = ref(100);
+const sentinel = ref(null);
+let observer = null;
 
 const FILTERS = [
   { value: 'all', label: '全部' },
@@ -148,4 +146,25 @@ const filtered = computed(() => {
 
 const visibleRows = computed(() => filtered.value.slice(0, limit.value));
 const hasMore = computed(() => filtered.value.length > visibleRows.value.length);
+
+watch([query, stateFilter], () => {
+  limit.value = 100;
+});
+
+function setupObserver() {
+  observer = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting) && hasMore.value) {
+      limit.value += 100;
+    }
+  }, { rootMargin: '200px' });
+  if (sentinel.value) observer.observe(sentinel.value);
+}
+
+watch(sentinel, (el, prev) => {
+  if (prev) observer?.unobserve(prev);
+  if (el) observer?.observe(el);
+});
+
+onMounted(setupObserver);
+onUnmounted(() => observer?.disconnect());
 </script>

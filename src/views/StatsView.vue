@@ -44,12 +44,13 @@
 
     <section class="card">
       <h2 class="section-title">卡片状态</h2>
-      <div class="word-list" style="margin-top: 12px;">
-        <div v-for="row in stateRows" :key="row.state" class="word-row">
-          <span class="word-row-main">
-            <span class="word-row-label">{{ row.label }}</span>
+      <div class="dist-list" style="margin-top: 12px;">
+        <div v-for="row in stateRows" :key="row.state" class="dist-row">
+          <span class="dist-name">{{ row.label }}</span>
+          <span class="dist-track">
+            <span class="dist-fill" :class="`is-${row.state}`" :style="{ width: `${row.percent}%` }"></span>
           </span>
-          <span class="word-row-side">{{ row.count }} 张</span>
+          <span class="dist-count">{{ row.count }} 张</span>
         </div>
       </div>
     </section>
@@ -126,10 +127,12 @@ const stateRows = computed(() => {
     if (card.suspended) continue;
     counts[card.state] = (counts[card.state] || 0) + 1;
   }
+  const total = Object.values(counts).reduce((sum, value) => sum + value, 0) || 1;
   return Object.entries(counts).map(([state, count]) => ({
     state,
     label: CARD_STATE_LABELS[state] || state,
-    count
+    count,
+    percent: Math.round((count / total) * 100)
   }));
 });
 

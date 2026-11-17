@@ -26,7 +26,7 @@ defineProps({
   tiny: { type: Boolean, default: false }
 });
 
-// 换 logo 时只要替换 public/logo.svg，不用改任何代码。
-const logoSrc = `${import.meta.env.BASE_URL}logo.svg`;
+// 换 logo 时只要替换 public/logo.png（透明背景），不用改任何代码。
+const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
 const imageFailed = ref(false);
 </script>

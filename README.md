@@ -39,6 +39,21 @@
 - 导出 / 导入备份（`.panbackup`）
 - 深色模式
 
+## 图标与品牌
+
+```
+public/logo.png              透明背景，App 内页头 / 页脚使用
+public/logo-square.png       奶油底方形版，备用
+public/icons/icon-192.png    PWA 图标（奶油底，不透明）
+public/icons/icon-512.png
+public/icons/icon-maskable-512.png   带安全边距的 maskable 版
+public/icons/apple-touch-icon.png    iOS 主屏图标
+```
+
+换 logo 只需替换 `public/logo.png`，代码无需改动：`src/components/BrandMark.vue` 会自动读取，图片缺失时回退到内置线条图标。
+
+**关于背景透明**：App 图标（iOS / PWA）必须不透明，透明 PNG 在 iOS 主屏会变黑底，所以图标用奶油底合成；只有 App 内的 `logo.png` 保留透明通道。
+
 ## 技术栈
 
 Vue 3 + Vant 4 + Vue Router + Vite 5 + vite-plugin-pwa，数据存储使用 IndexedDB。

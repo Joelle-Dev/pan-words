@@ -1,17 +1,18 @@
 <template>
   <div class="page">
-    <header class="page-head">
-      <div class="page-head-copy">
+    <header class="masthead">
+      <div class="masthead-row">
         <BrandMark />
-        <p class="page-subtitle">{{ greeting }}</p>
+        <button class="icon-btn" type="button" aria-label="统计" @click="router.push('/stats')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.5 19V5.5"></path>
+            <path d="M4.5 19h15"></path>
+            <path d="m8.5 14.5 3.5-3.5 2.8 2.8 4.7-5.6"></path>
+          </svg>
+        </button>
       </div>
-      <button class="icon-btn" type="button" aria-label="统计" @click="router.push('/stats')">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4.5 19V5.5"></path>
-          <path d="M4.5 19h15"></path>
-          <path d="m8.5 14.5 3.5-3.5 2.8 2.8 4.7-5.6"></path>
-        </svg>
-      </button>
+      <h1 class="masthead-title">{{ greeting }}</h1>
+      <p class="masthead-date">{{ todayLabel }}</p>
     </header>
 
     <section class="today-hero">
@@ -29,7 +30,6 @@
         <span>已复习 <b>{{ todayStats.reviewed }}</b></span>
         <span>新学 <b>{{ todayStats.learned }}</b></span>
         <span v-if="streak">连续 <b>{{ streak }}</b> 天</span>
-        <span v-if="load.overdue">逾期 <b>{{ load.overdue }}</b></span>
       </div>
 
       <button
@@ -45,21 +45,6 @@
     <div v-if="examCountdown" class="exam-strip">
       <span>距考试还有 <b>{{ examCountdown.days }}</b> 天</span>
       <span>每天 {{ examCountdown.perDay }} 个新词</span>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat-cell">
-        <b>{{ counts.words }}</b>
-        <small>词条</small>
-      </div>
-      <div class="stat-cell">
-        <b>{{ counts.cards }}</b>
-        <small>卡片</small>
-      </div>
-      <div class="stat-cell">
-        <b>{{ remainingNew }}</b>
-        <small>新词余额</small>
-      </div>
     </div>
 
     <section>
@@ -114,7 +99,6 @@ const {
   deckNotes,
   load,
   quota,
-  counts,
   streak,
   todayStats,
   activeDeck,
@@ -123,6 +107,12 @@ const {
 } = useLibrary();
 
 const greeting = computed(() => greetingForHour(new Date().getHours()));
+
+const todayLabel = computed(() => {
+  const now = new Date();
+  const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  return `${now.getMonth() + 1} 月 ${now.getDate()} 日 · ${weekdays[now.getDay()]}`;
+});
 
 const remainingNew = computed(() => quota.value.remainingNew);
 

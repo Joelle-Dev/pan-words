@@ -10,8 +10,11 @@
     <section class="card">
       <h2 class="section-title">每日节奏</h2>
 
-      <div class="field field-gap">
-        <label class="field-label" for="new-per-day">每天新词：{{ form.newPerDay }}</label>
+      <div class="slider-row" style="margin-top: 12px;">
+        <div class="slider-head">
+          <label for="new-per-day">每天新词</label>
+          <span class="slider-value">{{ form.newPerDay }}</span>
+        </div>
         <input
           id="new-per-day"
           v-model.number="form.newPerDay"
@@ -23,8 +26,11 @@
         >
       </div>
 
-      <div class="field field-gap">
-        <label class="field-label" for="reviews-per-day">每天复习上限：{{ form.reviewsPerDay }}</label>
+      <div class="slider-row" style="margin-top: 12px;">
+        <div class="slider-head">
+          <label for="reviews-per-day">每天复习上限</label>
+          <span class="slider-value">{{ form.reviewsPerDay }}</span>
+        </div>
         <input
           id="reviews-per-day"
           v-model.number="form.reviewsPerDay"
@@ -70,15 +76,13 @@
 
     <section class="card">
       <h2 class="section-title">数据</h2>
-      <p class="card-hint">
-        词库只存在这台设备上。换手机或清理浏览器数据前，记得导出一份。
-      </p>
+      <p class="card-hint">词库只存在这台设备上。换手机或清理浏览器数据前，记得导出一份。</p>
       <p class="card-hint is-strong">{{ backupText }}</p>
-      <div style="display: flex; gap: 10px; margin-top: 14px;">
-        <button class="secondary-btn" type="button" style="flex: 1;" :disabled="busy" @click="exportData">
+      <div class="btn-row">
+        <button class="secondary-btn" type="button" :disabled="busy" @click="exportData">
           导出备份
         </button>
-        <button class="secondary-btn" type="button" style="flex: 1;" :disabled="busy" @click="triggerImport">
+        <button class="secondary-btn" type="button" :disabled="busy" @click="triggerImport">
           导入备份
         </button>
       </div>
@@ -93,19 +97,14 @@
 
     <section v-if="!standalone" class="card">
       <h2 class="section-title">装到主屏幕</h2>
-      <template v-if="isIos">
-        <p class="page-subtitle" style="margin-top: 8px;">
-          在 Safari 里点「分享」→「添加到主屏幕」。不装的话，系统可能会清掉你的词库。
-        </p>
-      </template>
-      <template v-else>
-        <p class="page-subtitle" style="margin-top: 8px;">
-          装到主屏幕后，离线也能复习，数据也不容易被清掉。
-        </p>
-        <button class="secondary-btn" type="button" style="margin-top: 12px;" @click="install">
-          安装
-        </button>
-      </template>
+      <p class="card-hint">
+        {{ isIos
+          ? '在 Safari 里点「分享」→「添加到主屏幕」。不装的话，系统可能会清掉你的词库。'
+          : '装到主屏幕后，离线也能复习，数据也不容易被清掉。' }}
+      </p>
+      <button v-if="!isIos" class="secondary-btn" type="button" style="margin-top: 12px; width: 100%;" @click="install">
+        安装
+      </button>
     </section>
 
     <footer class="page-footer">

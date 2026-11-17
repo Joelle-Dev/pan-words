@@ -16,12 +16,39 @@
       <LoadingState text="正在准备今天的队列…" />
     </div>
 
-    <div v-else-if="!current" class="review-stage review-done">
-      <h2 class="review-done-title">{{ finishedTitle }}</h2>
-      <p class="review-done-text">{{ finishedText }}</p>
-      <button class="primary-btn" type="button" style="max-width: 240px;" @click="quit">
-        回到今天
-      </button>
+    <div v-else-if="!current" class="review-stage">
+      <div v-if="doneCount" class="review-done">
+        <span class="done-star" aria-hidden="true">✦</span>
+        <h2 class="review-done-title">今日完成 {{ doneCount }} 个</h2>
+        <p class="review-done-text">用时 {{ elapsedLabel }} · 准确率 {{ accuracyPercent }}</p>
+
+        <div class="done-dist">
+          <div
+            v-for="item in distribution"
+            :key="item.rating"
+            class="done-dist-cell"
+            :data-rating="item.rating"
+          >
+            <b>{{ item.count }}</b>
+            <small>{{ item.label }}</small>
+          </div>
+        </div>
+
+        <p v-if="streak" class="done-streak">连续打卡 <b>{{ streak }}</b> 天 🔥</p>
+
+        <div class="done-actions">
+          <button class="primary-btn" type="button" @click="quit">回到今天</button>
+          <button class="secondary-btn" type="button" @click="studyMore">再学一轮</button>
+        </div>
+      </div>
+
+      <div v-else class="review-done">
+        <h2 class="review-done-title">现在没有要复习的</h2>
+        <p class="review-done-text">去「收词」加几个词，或者明天再来。</p>
+        <button class="primary-btn" type="button" style="max-width: 240px;" @click="quit">
+          回到今天
+        </button>
+      </div>
     </div>
 
     <template v-else>
@@ -29,12 +56,16 @@
         <div class="review-card" :class="{ 'is-flipping': flipping }">
           <span class="review-mode">{{ modeLabel }}</span>
 
-          <template v-if="current.mode === 'listen'">
-            <button class="icon-btn" type="button" aria-label="再听一次" @click="playAudio">🔊</button>
-          </template>
+          <button
+            v-if="current.mode === 'listen'"
+            class="icon-btn"
+            type="button"
+            aria-label="再听一次"
+            @click="playAudio"
+          >🔊</button>
 
           <p
-            v-if="current.mode !== 'cloze'"
+            v-if="current.mode !== 'cloze' && displayWord"
             class="review-word"
             :class="{ 'is-long': displayWord.length > 14 }"
           >
@@ -44,10 +75,6 @@
           <p v-if="current.mode === 'cloze'" class="review-sentence">
             {{ clozeSentence }}
           </p>
-
-          <p v-else-if="note?.sentence" class="review-sentence">{{ note.sentence }}</p>
-
-          <p v-if="note?.phonetic" class="review-extra">{{ note.phonetic }}</p>
 
           <div v-if="current.mode === 'spell'" class="review-answer">
             <input
@@ -69,13 +96,14 @@
           </div>
 
           <template v-if="revealed">
+            <p v-if="note?.phonetic" class="review-extra">{{ note.phonetic }}</p>
+            <p v-if="note?.sentence && current.mode !== 'cloze'" class="review-sentence">{{ note.sentence }}</p>
             <div class="review-divider"></div>
             <p class="review-meaning">{{ note?.meaning || '还没填释义' }}</p>
-            <p v-if="note?.pos" class="review-extra">{{ note.pos }}</p>
+            <p v-if="reviewFacts" class="review-facts">{{ reviewFacts }}</p>
             <p v-if="current.mode === 'recognize' && note?.sentenceBlank && !note?.sentence" class="review-extra">
               {{ note.sentenceBlank }}
             </p>
-            <p v-if="note?.source" class="review-extra">{{ note.source }}</p>
           </template>
 
           <button
@@ -100,14 +128,14 @@ import { useRouter } from 'vue-router';
 import RatingBar from '../components/RatingBar.vue';
 import LoadingState from '../components/LoadingState.vue';
 import { useLibrary } from '../composables/useLibrary';
-import { CARD_MODE_LABELS } from '../srs/constants.js';
+import { CARD_MODE_LABELS, RATING_LABELS } from '../srs/constants.js';
 import { RATING, previewIntervals } from '../srs/fsrs.js';
 import { submitRating } from '../lib/repo.js';
 import { haptic } from '../utils/haptics.js';
 import { primeSpeech, speak, supportsSpeech } from '../lib/tts.js';
 
 const router = useRouter();
-const { ready, noteById, activeDeck, buildTodayQueue, reload } = useLibrary();
+const { ready, noteById, activeDeck, buildTodayQueue, reload, streak } = useLibrary();
 
 const loading = ref(true);
 const queue = ref([]);
@@ -120,6 +148,9 @@ const doneCount = ref(0);
 const showPreview = ref(false);
 const spellingCorrect = ref(null);
 const repeatCount = ref(new Map());
+const startedAt = ref(0);
+const elapsedMs = ref(0);
+const ratingCounts = ref({ 1: 0, 2: 0, 3: 0, 4: 0 });
 
 const current = computed(() => queue.value[index.value] || null);
 const note = computed(() => (current.value ? noteById.value.get(current.value.noteId) : null));
@@ -131,9 +162,19 @@ const progressPercent = computed(() => (
 
 const modeLabel = computed(() => CARD_MODE_LABELS[current.value?.mode] || '认词');
 
+// 揭晓后的小字信息（词性 / 来源）合并成一行
+const reviewFacts = computed(() => {
+  if (!note.value) return '';
+  return [note.value.pos, note.value.source].filter(Boolean).join(' · ');
+});
+
 const displayWord = computed(() => {
   if (!current.value) return '';
-  if (current.value.mode === 'listen' && !revealed.value) return '听一听，这是哪个词';
+  if (!revealed.value) {
+    if (current.value.mode === 'listen') return '听一听，这是哪个词';
+    if (current.value.mode === 'spell') return '';
+    return note.value?.word || '';
+  }
   return note.value?.word || '';
 });
 
@@ -186,14 +227,27 @@ const spellDiffHtml = computed(() => {
   return `正确拼写：<b>${escapeHtml(expected)}</b><br>${html}`;
 });
 
-const finishedTitle = computed(() => (
-  doneCount.value ? '今天清空啦' : '现在没有要复习的'
-));
+// 结算：本次会话用时 / 准确率 / 四档分布
+const elapsedLabel = computed(() => {
+  const total = Math.round((elapsedMs.value || 0) / 1000);
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+});
 
-const finishedText = computed(() => (
-  doneCount.value
-    ? `一共复习了 ${doneCount.value} 张。明天见。`
-    : '去「收词」加几个词，或者明天再来。'
+const accuracyPercent = computed(() => {
+  const total = Object.values(ratingCounts.value).reduce((sum, value) => sum + value, 0);
+  if (!total) return '—';
+  const good = (ratingCounts.value[3] || 0) + (ratingCounts.value[4] || 0);
+  return `${Math.round((good / total) * 100)}%`;
+});
+
+const distribution = computed(() => (
+  [1, 2, 3, 4].map((rating) => ({
+    rating,
+    label: RATING_LABELS[rating],
+    count: ratingCounts.value[rating] || 0
+  }))
 ));
 
 function escapeHtml(value) {
@@ -260,10 +314,16 @@ async function rate(rating) {
   }
 
   doneCount.value += 1;
+  ratingCounts.value = {
+    ...ratingCounts.value,
+    [rating]: (ratingCounts.value[rating] || 0) + 1
+  };
   flipping.value = true;
   await new Promise((resolve) => setTimeout(resolve, 200));
   index.value += 1;
   resetCardState();
+
+  if (!current.value) elapsedMs.value = Date.now() - startedAt.value;
 
   if (current.value?.mode === 'spell') {
     await nextTick();
@@ -276,6 +336,26 @@ async function rate(rating) {
 function quit() {
   reload().catch(() => {});
   router.replace('/');
+}
+
+async function studyMore() {
+  await reload();
+  const { queue: built } = buildTodayQueue();
+  if (!built.length) {
+    quit();
+    return;
+  }
+  queue.value = built;
+  index.value = 0;
+  doneCount.value = 0;
+  ratingCounts.value = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  elapsedMs.value = 0;
+  startedAt.value = Date.now();
+  resetCardState();
+  if (built[0]?.mode === 'spell') {
+    await nextTick();
+    spellInput.value?.focus?.();
+  }
 }
 
 function onKey(event) {
@@ -306,6 +386,7 @@ onMounted(async () => {
     await reload();
     const { queue: built } = buildTodayQueue();
     queue.value = built;
+    if (built.length) startedAt.value = Date.now();
   } catch (err) {
     console.error('准备复习队列失败', err);
   } finally {
