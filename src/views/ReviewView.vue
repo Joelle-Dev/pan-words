@@ -119,6 +119,7 @@ const spellInput = ref(null);
 const doneCount = ref(0);
 const showPreview = ref(false);
 const spellingCorrect = ref(null);
+const repeatCount = ref(new Map());
 
 const current = computed(() => queue.value[index.value] || null);
 const note = computed(() => (current.value ? noteById.value.get(current.value.noteId) : null));
@@ -235,15 +236,27 @@ async function rate(rating) {
   const card = current.value;
   haptic(rating === RATING.AGAIN ? 'warning' : 'light');
 
+  let next = null;
   try {
-    await submitRating({
+    const result = await submitRating({
       card,
       rating,
       now: Date.now(),
       desiredRetention: Number(activeDeck.value?.desiredRetention) || 0.9
     });
+    next = result.card;
   } catch (err) {
     console.error('保存复习结果失败', err);
+  }
+
+  // 学习和重学中的卡要在本轮内再出现一次，否则「忘记」等于逃避。
+  // 上限 5 次，避免用户一直点忘记被困在同一张卡上。
+  if (next && (next.state === 'learning' || next.state === 'relearning')) {
+    const seen = repeatCount.value.get(next.id) || 0;
+    if (seen < 5) {
+      repeatCount.value.set(next.id, seen + 1);
+      queue.value.push(next);
+    }
   }
 
   doneCount.value += 1;

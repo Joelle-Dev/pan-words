@@ -12,7 +12,7 @@ import {
   listRecentLogs,
   getNote
 } from '../lib/repo.js';
-import { buildQueue, dailyLoad, todayProgress } from '../srs/queue.js';
+import { buildQueue, dailyLoad, reviewStreak, todayProgress } from '../srs/queue.js';
 import { RATING } from '../srs/constants.js';
 
 const ready = ref(false);
@@ -128,6 +128,10 @@ export function useLibrary() {
     });
   }
 
+  const streak = computed(() => (
+    reviewStreak({ logs: logs.value, todayKey: dayKeyOf(new Date()), dayKeyOf })
+  ));
+
   const counts = computed(() => {
     const activeNotes = deckNotes.value;
     return {
@@ -135,7 +139,7 @@ export function useLibrary() {
       cards: deckCards.value.length,
       due: load.value.due,
       fresh: load.value.new,
-      streak: 0
+      streak: streak.value
     };
   });
 
@@ -155,6 +159,7 @@ export function useLibrary() {
     quota,
     load,
     counts,
+    streak,
     dataVersion,
     buildTodayQueue,
     reload: loadAll,

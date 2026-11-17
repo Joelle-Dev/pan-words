@@ -28,6 +28,7 @@
       <div class="today-meta">
         <span>已复习 <b>{{ todayStats.reviewed }}</b> 张</span>
         <span>今天新学 <b>{{ todayStats.learned }}</b> 个</span>
+        <span v-if="streak">连续 <b>{{ streak }}</b> 天</span>
         <span v-if="load.overdue">逾期 <b>{{ load.overdue }}</b> 张</span>
       </div>
 
@@ -111,6 +112,7 @@ const {
   load,
   quota,
   counts,
+  streak,
   todayStats,
   activeDeck,
   buildTodayQueue,
