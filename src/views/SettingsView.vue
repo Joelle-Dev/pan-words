@@ -1,16 +1,16 @@
 <template>
   <div class="page">
     <header class="page-head">
-      <div>
+      <div class="page-head-copy">
         <h1 class="page-title">我的</h1>
         <p class="page-subtitle">{{ deckName }}</p>
       </div>
     </header>
 
     <section class="card">
-      <h2 class="page-title" style="font-size: 16px;">每日节奏</h2>
+      <h2 class="section-title">每日节奏</h2>
 
-      <div class="field" style="margin-top: 14px;">
+      <div class="field field-gap">
         <label class="field-label" for="new-per-day">每天新词：{{ form.newPerDay }}</label>
         <input
           id="new-per-day"
@@ -23,7 +23,7 @@
         >
       </div>
 
-      <div class="field" style="margin-top: 8px;">
+      <div class="field field-gap">
         <label class="field-label" for="reviews-per-day">每天复习上限：{{ form.reviewsPerDay }}</label>
         <input
           id="reviews-per-day"
@@ -36,7 +36,7 @@
         >
       </div>
 
-      <div class="field" style="margin-top: 14px;">
+      <div class="field field-gap">
         <label class="field-label" for="exam-date">考试日期（可选）</label>
         <input id="exam-date" v-model="form.examDate" class="input" type="date">
       </div>
@@ -44,7 +44,7 @@
       <button
         class="primary-btn"
         type="button"
-        style="margin-top: 16px;"
+        style="margin-top: 18px;"
         :disabled="!dirty"
         @click="saveDeck"
       >
@@ -53,7 +53,7 @@
     </section>
 
     <section class="card">
-      <h2 class="page-title" style="font-size: 16px;">外观</h2>
+      <h2 class="section-title">外观</h2>
       <div class="chip-row" style="margin-top: 12px;">
         <button
           v-for="option in THEME_OPTIONS"
@@ -69,13 +69,11 @@
     </section>
 
     <section class="card">
-      <h2 class="page-title" style="font-size: 16px;">数据</h2>
-      <p class="page-subtitle" style="margin-top: 8px;">
+      <h2 class="section-title">数据</h2>
+      <p class="card-hint">
         词库只存在这台设备上。换手机或清理浏览器数据前，记得导出一份。
       </p>
-      <p class="page-subtitle" style="margin-top: 6px;">
-        {{ backupText }}
-      </p>
+      <p class="card-hint is-strong">{{ backupText }}</p>
       <div style="display: flex; gap: 10px; margin-top: 14px;">
         <button class="secondary-btn" type="button" style="flex: 1;" :disabled="busy" @click="exportData">
           导出备份
@@ -94,7 +92,7 @@
     </section>
 
     <section v-if="!standalone" class="card">
-      <h2 class="page-title" style="font-size: 16px;">装到主屏幕</h2>
+      <h2 class="section-title">装到主屏幕</h2>
       <template v-if="isIos">
         <p class="page-subtitle" style="margin-top: 8px;">
           在 Safari 里点「分享」→「添加到主屏幕」。不装的话，系统可能会清掉你的词库。
@@ -110,9 +108,10 @@
       </template>
     </section>
 
-    <p class="page-subtitle" style="text-align: center; margin-top: 8px;">
-      {{ buildLabel }}
-    </p>
+    <footer class="page-footer">
+      <BrandMark icon-only tiny />
+      <span>{{ buildLabel }}</span>
+    </footer>
   </div>
 </template>
 
@@ -121,6 +120,7 @@ import { computed, onMounted, ref } from 'vue';
 import { showConfirmDialog, showToast } from 'vant';
 import { useLibrary } from '../composables/useLibrary';
 import { THEME_OPTIONS, setThemeMode, themeMode } from '../utils/theme';
+import BrandMark from '../components/BrandMark.vue';
 import { usePwaInstall } from '../composables/usePwaInstall';
 import { backupReminder } from '../utils/backupReminder';
 import { getSetting, putRecord, setSetting } from '../lib/db.js';

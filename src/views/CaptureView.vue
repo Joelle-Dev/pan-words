@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <header class="page-head">
-      <div>
+      <div class="page-head-copy">
         <h1 class="page-title">收词</h1>
         <p class="page-subtitle">粘一段英文，扫出你还不认识的词</p>
       </div>
@@ -34,7 +34,7 @@
           ></textarea>
         </div>
 
-        <div class="field" style="margin-top: 12px;">
+        <div class="field field-gap">
           <label class="field-label" for="scan-title">标题（可选，会存进阅读列表）</label>
           <input
             id="scan-title"
@@ -60,9 +60,9 @@
         <div class="card">
           <div class="coverage-head">
             <span class="coverage-value">{{ coveragePercent }}</span>
-            <span class="page-subtitle" style="margin: 0;">你能读懂的比例</span>
+            <span class="section-meta">能读懂的比例</span>
           </div>
-          <p class="page-subtitle" style="margin-top: 6px;">
+          <p class="card-hint">
             共 {{ coverage.total }} 个词 · {{ coverage.unique }} 个不同词 · 生词 {{ coverage.unknown.length }} 个
           </p>
           <div class="coverage-bar">
@@ -71,13 +71,13 @@
         </div>
 
         <div v-if="coverage.unknown.length" class="card">
-          <div class="page-head">
-            <h2 class="page-title" style="font-size: 16px;">生词</h2>
+          <div class="section-head">
+            <h2 class="section-title">生词</h2>
             <button class="text-btn" type="button" @click="toggleAll">
               {{ allPicked ? '全不选' : '全选' }}
             </button>
           </div>
-          <div class="unknown-list" style="margin-top: 12px;">
+          <div class="unknown-list">
             <button
               v-for="item in coverage.unknown"
               :key="item.lemma"
@@ -108,11 +108,11 @@
       </template>
 
       <section v-if="articles.length">
-        <div class="page-head">
-          <h2 class="page-title" style="font-size: 16px;">读过的文章</h2>
-          <span class="page-subtitle" style="margin: 0;">{{ articles.length }} 篇</span>
+        <div class="section-head">
+          <h2 class="section-title">读过的文章</h2>
+          <span class="section-meta">{{ articles.length }} 篇</span>
         </div>
-        <div class="word-list" style="margin-top: 10px;">
+        <div class="word-list" style="margin-top: 12px;">
           <button
             v-for="item in articles"
             :key="item.id"
@@ -121,7 +121,7 @@
             @click="openArticle(item.id)"
           >
             <span class="word-row-main">
-              <span class="word-row-word" style="font-family: var(--font); font-size: 15px;">{{ item.title }}</span>
+              <span class="word-row-label">{{ item.title }}</span>
               <span class="word-row-meaning">{{ articleSummary(item) }}</span>
             </span>
             <span class="word-row-side">
@@ -163,7 +163,7 @@
           <p v-if="lookupNote" class="field-note">{{ lookupNote }}</p>
         </div>
 
-        <div class="field" style="margin-top: 12px;">
+        <div class="field field-gap">
           <label class="field-label" for="manual-meaning">释义</label>
           <input
             id="manual-meaning"
@@ -174,7 +174,7 @@
           >
         </div>
 
-        <div class="field" style="margin-top: 12px;">
+        <div class="field field-gap">
           <label class="field-label" for="manual-phonetic">音标（可选）</label>
           <input
             id="manual-phonetic"
@@ -192,18 +192,17 @@
           </div>
         </div>
 
-        <div class="field" style="margin-top: 12px;">
+        <div class="field field-gap">
           <label class="field-label" for="manual-sentence">原句（可选，会做成挖空卡）</label>
           <textarea
             id="manual-sentence"
             v-model="manual.sentence"
-            class="textarea"
-            style="min-height: 74px;"
+            class="textarea is-short"
             placeholder="The policy was met with widespread skepticism."
             spellcheck="false"
           ></textarea>
         </div>
-        <div class="field" style="margin-top: 12px;">
+        <div class="field field-gap">
           <label class="field-label" for="manual-source">来源（可选）</label>
           <input
             id="manual-source"
@@ -233,8 +232,7 @@
           <textarea
             id="import-text"
             v-model="importText"
-            class="textarea"
-            style="min-height: 180px;"
+            class="textarea is-tall"
             placeholder="每行一个词，支持这几种格式：&#10;abandon​放弃&#10;abandon - 放弃&#10;abandon,放弃,n.&#10;abandon"
             spellcheck="false"
           ></textarea>
@@ -251,8 +249,8 @@
       </div>
 
       <div v-if="importPreview.length" class="card">
-        <h2 class="page-title" style="font-size: 16px;">识别到 {{ importPreview.length }} 行</h2>
-        <div class="word-list" style="margin-top: 10px;">
+        <h2 class="section-title">识别到 {{ importPreview.length }} 行</h2>
+        <div class="word-list" style="margin-top: 12px;">
           <div v-for="(row, index) in importPreview.slice(0, 20)" :key="index" class="word-row">
             <span class="word-row-main">
               <span class="word-row-word">{{ row.word }}</span>
@@ -260,7 +258,7 @@
             </span>
           </div>
         </div>
-        <p v-if="importPreview.length > 20" class="page-subtitle" style="margin-top: 8px;">
+        <p v-if="importPreview.length > 20" class="card-hint">
           还有 {{ importPreview.length - 20 }} 行未显示
         </p>
       </div>

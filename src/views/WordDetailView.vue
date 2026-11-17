@@ -2,8 +2,8 @@
   <div class="page">
     <header class="page-head">
       <button class="icon-btn" type="button" aria-label="返回" @click="back">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m15 18-6-6 6-6"></path>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m14.5 18-6-6 6-6"></path>
         </svg>
       </button>
       <button class="icon-btn" type="button" aria-label="发音" @click="playAudio">🔊</button>
@@ -20,20 +20,20 @@
         </div>
         <p v-if="lookupNote" class="field-note">{{ lookupNote }}</p>
       </div>
-      <div class="field" style="margin-top: 12px;">
+      <div class="field field-gap">
         <label class="field-label" for="meaning">释义</label>
         <input id="meaning" v-model="form.meaning" class="input" type="text" placeholder="填一个你记得住的中文释义">
       </div>
-      <div class="field" style="margin-top: 12px;">
+      <div class="field field-gap">
         <label class="field-label" for="phonetic">音标（可选）</label>
         <input id="phonetic" v-model="form.phonetic" class="input" type="text" placeholder="/ˈskeptɪsɪzəm/">
       </div>
-      <div class="field" style="margin-top: 12px;">
+      <div class="field field-gap">
         <label class="field-label" for="sentence">原句（可选）</label>
         <textarea id="sentence" v-model="form.sentence" class="textarea" style="min-height: 82px;" spellcheck="false"></textarea>
         <p v-if="blankPreview" class="page-subtitle" style="margin: 0;">挖空预览：{{ blankPreview }}</p>
       </div>
-      <div class="field" style="margin-top: 12px;">
+      <div class="field field-gap">
         <label class="field-label" for="source">来源（可选）</label>
         <input id="source" v-model="form.source" class="input" type="text" placeholder="书名 第 3 章">
       </div>
@@ -50,13 +50,11 @@
     </div>
 
     <div v-if="noteCards.length" class="card">
-      <h2 class="page-title" style="font-size: 16px;">这张词的卡</h2>
+      <h2 class="section-title">这张词的卡</h2>
       <div class="word-list" style="margin-top: 10px;">
         <div v-for="card in noteCards" :key="card.id" class="word-row">
           <span class="word-row-main">
-            <span class="word-row-word" style="font-family: var(--font); font-size: 14px;">
-              {{ modeLabel(card.mode) }}
-            </span>
+            <span class="word-row-label">{{ modeLabel(card.mode) }}</span>
             <span class="word-row-meaning">{{ stabilityLabel(card) }}</span>
           </span>
           <span class="word-row-side">

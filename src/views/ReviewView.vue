@@ -2,7 +2,7 @@
   <div class="review-page">
     <header class="review-head">
       <button class="icon-btn" type="button" aria-label="退出复习" @click="quit">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
           <path d="M18 6 6 18M6 6l12 12"></path>
         </svg>
       </button>
@@ -295,11 +295,21 @@ function onKey(event) {
 
 onMounted(async () => {
   document.addEventListener('keydown', onKey);
+
+  // 兜底：IndexedDB 被其他标签页占住时 openDB 会一直挂着，
+  // 不能让用户永远看着转圈。
+  let safety = setTimeout(() => {
+    if (loading.value) loading.value = false;
+  }, 4000);
+
   try {
     await reload();
     const { queue: built } = buildTodayQueue();
     queue.value = built;
+  } catch (err) {
+    console.error('准备复习队列失败', err);
   } finally {
+    clearTimeout(safety);
     loading.value = false;
     if (current.value?.mode === 'spell') {
       await nextTick();

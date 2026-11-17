@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <header class="page-head">
-      <div>
+      <div class="page-head-copy">
         <h1 class="page-title">统计</h1>
         <p class="page-subtitle">坚持比速度更重要</p>
       </div>
@@ -23,11 +23,11 @@
     </div>
 
     <section class="card">
-      <div class="page-head">
-        <h2 class="page-title" style="font-size: 16px;">最近 12 周</h2>
-        <span class="page-subtitle" style="margin: 0;">{{ heatmapTotal }} 次复习</span>
+      <div class="section-head">
+        <h2 class="section-title">最近 12 周</h2>
+        <span class="section-meta">{{ heatmapTotal }} 次复习</span>
       </div>
-      <div class="heatmap" style="margin-top: 14px;">
+      <div class="heatmap">
         <span
           v-for="cell in heatmap"
           :key="cell.key"
@@ -36,18 +36,18 @@
           :title="`${cell.key} · ${cell.count} 次`"
         ></span>
       </div>
-      <div class="page-subtitle" style="display: flex; justify-content: space-between; margin-top: 10px;">
+      <div class="heatmap-legend">
         <span>少</span>
         <span>多</span>
       </div>
     </section>
 
     <section class="card">
-      <h2 class="page-title" style="font-size: 16px;">卡片状态</h2>
-      <div class="word-list" style="margin-top: 10px;">
+      <h2 class="section-title">卡片状态</h2>
+      <div class="word-list" style="margin-top: 12px;">
         <div v-for="row in stateRows" :key="row.state" class="word-row">
           <span class="word-row-main">
-            <span class="word-row-word" style="font-family: var(--font); font-size: 14px;">{{ row.label }}</span>
+            <span class="word-row-label">{{ row.label }}</span>
           </span>
           <span class="word-row-side">{{ row.count }} 张</span>
         </div>

@@ -1,14 +1,14 @@
 <template>
   <div class="page">
     <header class="page-head">
-      <div>
+      <div class="page-head-copy">
         <h1 class="page-title">词库</h1>
-        <p class="page-subtitle">{{ deckNotes.length }} 个词</p>
+        <p class="page-subtitle">{{ deckNotes.length }} 个词 · {{ filtered.length }} 个符合条件</p>
       </div>
       <button class="icon-btn" type="button" aria-label="收词" @click="router.push('/capture')">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-          <path d="M12 5v14"></path>
-          <path d="M5 12h14"></path>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+          <path d="M12 5.5v13"></path>
+          <path d="M5.5 12h13"></path>
         </svg>
       </button>
     </header>

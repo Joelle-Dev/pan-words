@@ -14,6 +14,7 @@
         :class="{ 'is-active': isActive(tab) }"
         type="button"
         :aria-current="isActive(tab) ? 'page' : undefined"
+        :aria-label="tab.label"
         @click="go(tab)"
       >
         <span v-html="tab.icon" aria-hidden="true"></span>
@@ -42,28 +43,28 @@ const TABS = [
     label: '今天',
     path: '/',
     match: ['today'],
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6V12l3 2"/></svg>'
   },
   {
     name: 'capture',
     label: '收词',
     path: '/capture',
     match: ['capture', 'reader'],
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>'
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.6A1.1 1.1 0 0 1 5.6 4.5H18.4a1.1 1.1 0 0 1 1.1 1.1v12.8a1.1 1.1 0 0 1-1.1 1.1H5.6a1.1 1.1 0 0 1-1.1-1.1z"/><path d="M8.2 9h7.6"/><path d="M8.2 13h4.6"/></svg>'
   },
   {
     name: 'library',
     label: '词库',
     path: '/library',
     match: ['library', 'word'],
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H7v18H5.5A1.5 1.5 0 0 1 4 19.5z"/><path d="M7 3h3v18H7z"/><path d="m13 3.7 2.6-.7 4 15.4-2.6.7z"/></svg>'
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 5A1.4 1.4 0 0 1 6 3.6h1.6v16.8H6A1.4 1.4 0 0 1 4.6 19z"/><path d="M7.6 3.6h2.8v16.8H7.6z"/><path d="m13.2 4.2 2.5-.7 3.7 14.9-2.5.7z"/></svg>'
   },
   {
     name: 'settings',
     label: '我的',
     path: '/settings',
     match: ['settings', 'stats'],
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-3.6 3.4-6 7.5-6s7.5 2.4 7.5 6"/></svg>'
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.3"/><path d="M5 19.4c0-3.4 3.1-5.6 7-5.6s7 2.2 7 5.6"/></svg>'
   }
 ];
 

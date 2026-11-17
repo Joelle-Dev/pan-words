@@ -1,15 +1,15 @@
 <template>
   <div class="page">
     <header class="page-head">
-      <div>
-        <h1 class="page-title">今天</h1>
+      <div class="page-head-copy">
+        <BrandMark />
         <p class="page-subtitle">{{ greeting }}</p>
       </div>
       <button class="icon-btn" type="button" aria-label="统计" @click="router.push('/stats')">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 19V5"></path>
-          <path d="M4 19h16"></path>
-          <path d="m8 14 4-4 3 3 5-6"></path>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4.5 19V5.5"></path>
+          <path d="M4.5 19h15"></path>
+          <path d="m8.5 14.5 3.5-3.5 2.8 2.8 4.7-5.6"></path>
         </svg>
       </button>
     </header>
@@ -26,10 +26,10 @@
       </div>
 
       <div class="today-meta">
-        <span>已复习 <b>{{ todayStats.reviewed }}</b> 张</span>
-        <span>今天新学 <b>{{ todayStats.learned }}</b> 个</span>
+        <span>已复习 <b>{{ todayStats.reviewed }}</b></span>
+        <span>新学 <b>{{ todayStats.learned }}</b></span>
         <span v-if="streak">连续 <b>{{ streak }}</b> 天</span>
-        <span v-if="load.overdue">逾期 <b>{{ load.overdue }}</b> 张</span>
+        <span v-if="load.overdue">逾期 <b>{{ load.overdue }}</b></span>
       </div>
 
       <button
@@ -44,7 +44,7 @@
 
     <div v-if="examCountdown" class="exam-strip">
       <span>距考试还有 <b>{{ examCountdown.days }}</b> 天</span>
-      <span>每天需要 {{ examCountdown.perDay }} 个新词</span>
+      <span>每天 {{ examCountdown.perDay }} 个新词</span>
     </div>
 
     <div class="stat-grid">
@@ -58,16 +58,17 @@
       </div>
       <div class="stat-cell">
         <b>{{ remainingNew }}</b>
-        <small>今日新词余额</small>
+        <small>新词余额</small>
       </div>
     </div>
 
     <section>
-      <div class="page-head">
-        <h2 class="page-title" style="font-size: 16px;">最近加的</h2>
+      <div class="section-head">
+        <h2 class="section-title">最近加的</h2>
         <button class="text-btn" type="button" @click="router.push('/capture')">去收词</button>
       </div>
-      <div v-if="recentNotes.length" class="word-list" style="margin-top: 10px;">
+
+      <div v-if="recentNotes.length" class="word-list">
         <button
           v-for="note in recentNotes"
           :key="note.id"
@@ -84,10 +85,11 @@
           </span>
         </button>
       </div>
+
       <div v-else class="empty-hint">
         <strong>词库还是空的</strong>
         <span>去「收词」粘一段英文，Pan 会帮你扫出生词</span>
-        <button class="secondary-btn" type="button" style="margin-top: 8px;" @click="router.push('/capture')">
+        <button class="secondary-btn" type="button" style="margin-top: 10px;" @click="router.push('/capture')">
           粘一段文字
         </button>
       </div>
@@ -98,6 +100,7 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import BrandMark from '../components/BrandMark.vue';
 import { useLibrary } from '../composables/useLibrary';
 import { CARD_STATE_LABELS } from '../srs/constants.js';
 import { greetingForHour } from '../utils/greeting.js';
@@ -123,10 +126,7 @@ const greeting = computed(() => greetingForHour(new Date().getHours()));
 
 const remainingNew = computed(() => quota.value.remainingNew);
 
-const hasQueue = computed(() => {
-  const queue = buildTodayQueue();
-  return queue.queue.length > 0;
-});
+const hasQueue = computed(() => buildTodayQueue().queue.length > 0);
 
 const heroState = computed(() => {
   if (hasQueue.value) return load.value.due > 0 ? 'learning' : 'new';
@@ -172,8 +172,7 @@ const examCountdown = computed(() => {
     const card = cardStateByNote.value.get(note.id);
     return !card || card === 'new';
   }).length;
-  const perDay = days > 0 ? Math.ceil(newCards / days) : newCards;
-  return { days, perDay };
+  return { days, perDay: days > 0 ? Math.ceil(newCards / days) : newCards };
 });
 
 function startReview() {

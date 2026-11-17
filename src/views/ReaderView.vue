@@ -2,15 +2,15 @@
   <div class="review-page">
     <header class="review-head">
       <button class="icon-btn" type="button" aria-label="返回" @click="back">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m15 18-6-6 6-6"></path>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m14.5 18-6-6 6-6"></path>
         </svg>
       </button>
       <span class="review-counter" style="flex: 1; text-align: center;">
         {{ coverage ? `能读懂 ${coverageText}` : article?.title || '阅读' }}
       </span>
       <button class="icon-btn" type="button" aria-label="收词" @click="router.push('/capture')">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
           <path d="M12 5v14"></path>
           <path d="M5 12h14"></path>
         </svg>
@@ -26,12 +26,12 @@
       <div class="card-soft" style="margin-bottom: 12px;">
         <div class="coverage-head">
           <span class="coverage-value">{{ coverageText }}</span>
-          <span class="page-subtitle" style="margin: 0;">可读性</span>
+          <span class="section-meta">可读性</span>
         </div>
         <div class="coverage-bar">
           <div class="coverage-fill" :style="{ width: `${(coverage?.coverage || 0) * 100}%` }"></div>
         </div>
-        <p class="page-subtitle" style="margin-top: 8px;">
+        <p class="card-hint">
           生词 {{ coverage?.unknown.length || 0 }} 个 · 点带下划线的词可以加进词库
         </p>
       </div>
@@ -50,7 +50,7 @@
         </div>
         <p v-if="lookupNote" class="field-note">{{ lookupNote }}</p>
       </div>
-      <p v-if="selectedSentence" class="page-subtitle" style="margin-top: 10px;">{{ selectedSentence }}</p>
+      <p v-if="selectedSentence" class="card-hint is-quote">{{ selectedSentence }}</p>
       <button class="primary-btn" type="button" style="margin-top: 16px;" @click="addSelected">
         加入词库
       </button>
